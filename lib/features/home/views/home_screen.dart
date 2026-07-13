@@ -31,7 +31,9 @@ class HomeScreen extends StatelessWidget {
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 sliver: SliverGrid(
-                  delegate: SliverChildListDelegate(_buildModuleCards(l, context)),
+                  delegate: SliverChildListDelegate(
+                    _buildModuleCards(l, context),
+                  ),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     crossAxisSpacing: 14,
@@ -82,26 +84,15 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              // Notification icon
-              GestureDetector(
+              _HeaderIconButton(
+                icon: Icons.notifications_none_rounded,
                 onTap: () => Get.toNamed(AppRoutes.notifications),
-                child: Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    color: AppColors.bgCard,
-                    border: const Border.fromBorderSide(
-                      BorderSide(color: AppColors.border),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.notifications_none_rounded,
-                    color: AppColors.textPrimary,
-                    size: 22,
-                  ),
-                ),
               ).animate().fadeIn(delay: 200.ms, duration: 500.ms),
+              const SizedBox(width: 10),
+              _HeaderIconButton(
+                icon: Icons.person_outline_rounded,
+                onTap: () => Get.toNamed(AppRoutes.settings),
+              ).animate().fadeIn(delay: 260.ms, duration: 500.ms),
             ],
           ),
 
@@ -109,52 +100,55 @@ class HomeScreen extends StatelessWidget {
 
           // Farm summary card
           GestureDetector(
-            onTap: () => Get.toNamed(AppRoutes.farmProfile),
-            child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: AppColors.primaryGradient,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryLight.withOpacity(0.25),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
+                onTap: () => Get.toNamed(AppRoutes.farmProfile),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: AppColors.primaryGradient,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryLight.withOpacity(0.25),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const Text('🏡', style: TextStyle(fontSize: 36)),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'My Farm',
-                          style: AppTextStyles.titleMedium.copyWith(
-                            color: Colors.white,
-                          ),
+                  child: Row(
+                    children: [
+                      const Text('🏡', style: TextStyle(fontSize: 36)),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'My Farm',
+                              style: AppTextStyles.titleMedium.copyWith(
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              '0 active crops • Tap to set up',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          '0 active crops • Tap to set up',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Colors.white70,
+                        size: 16,
+                      ),
+                    ],
                   ),
-                  const Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: Colors.white70,
-                    size: 16,
-                  ),
-                ],
-              ),
-            ),
-          ).animate().fadeIn(delay: 250.ms, duration: 600.ms).slideY(begin: 0.1),
+                ),
+              )
+              .animate()
+              .fadeIn(delay: 250.ms, duration: 600.ms)
+              .slideY(begin: 0.1),
 
           const SizedBox(height: 24),
 
@@ -236,6 +230,32 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+class _HeaderIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _HeaderIconButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: AppColors.bgCard,
+          border: const Border.fromBorderSide(
+            BorderSide(color: AppColors.border),
+          ),
+        ),
+        child: Icon(icon, color: AppColors.textPrimary, size: 22),
+      ),
+    );
+  }
+}
+
 class _ModuleData {
   final String emoji;
   final String label;
@@ -265,87 +285,101 @@ class _ModuleCard extends StatelessWidget {
     return GestureDetector(
       onTap: data.locked
           ? () => Get.snackbar(
-                'Coming Soon',
-                '${data.label} unlocks in a future phase',
-                backgroundColor: AppColors.bgCard,
-                colorText: AppColors.textPrimary,
-                borderRadius: 14,
-                margin: const EdgeInsets.all(16),
-                duration: const Duration(seconds: 2),
-              )
+              'Coming Soon',
+              '${data.label} unlocks in a future phase',
+              backgroundColor: AppColors.bgCard,
+              colorText: AppColors.textPrimary,
+              borderRadius: 14,
+              margin: const EdgeInsets.all(16),
+              duration: const Duration(seconds: 2),
+            )
           : () => Get.toNamed(data.route!),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: data.gradient,
-          border: Border.all(color: AppColors.border.withOpacity(0.5)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(data.emoji, style: const TextStyle(fontSize: 32)),
-                  const Spacer(),
-                  Text(data.label, style: AppTextStyles.titleMedium),
-                  const SizedBox(height: 2),
-                  Text(
-                    data.subtitle,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: data.locked
-                          ? AppColors.textHint
-                          : AppColors.textSecondary,
+      child:
+          Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: data.gradient,
+                  border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            if (data.locked)
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border.withOpacity(0.5)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.lock_outline_rounded,
-                          size: 10, color: AppColors.textHint),
-                      const SizedBox(width: 3),
-                      Text(
-                        'Soon',
-                        style: AppTextStyles.bodySmall.copyWith(fontSize: 10),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            data.emoji,
+                            style: const TextStyle(fontSize: 32),
+                          ),
+                          const Spacer(),
+                          Text(data.label, style: AppTextStyles.titleMedium),
+                          const SizedBox(height: 2),
+                          Text(
+                            data.subtitle,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: data.locked
+                                  ? AppColors.textHint
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (data.locked)
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.border.withOpacity(0.5),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.lock_outline_rounded,
+                                size: 10,
+                                color: AppColors.textHint,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                'Soon',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              )
+              .animate()
+              .fadeIn(
+                delay: Duration(milliseconds: 400 + (index * 80)),
+                duration: 500.ms,
+              )
+              .scale(
+                begin: const Offset(0.92, 0.92),
+                curve: Curves.easeOutBack,
               ),
-          ],
-        ),
-      )
-          .animate()
-          .fadeIn(
-            delay: Duration(milliseconds: 400 + (index * 80)),
-            duration: 500.ms,
-          )
-          .scale(
-            begin: const Offset(0.92, 0.92),
-            curve: Curves.easeOutBack,
-          ),
     );
   }
 }

@@ -26,15 +26,27 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(height: 48),
 
                 // ── Header ─────────────────────────────────────────────
-                _buildHeader(l)
-                    .animate()
-                    .fadeIn(duration: 700.ms)
-                    .slideY(begin: -0.2),
+                _buildHeader(
+                  l,
+                ).animate().fadeIn(duration: 700.ms).slideY(begin: -0.2),
 
                 const SizedBox(height: 48),
 
+                Obx(
+                  () => _AuthModeToggle(
+                    ctrl: ctrl,
+                    selectedMode: ctrl.authMode.value,
+                  ),
+                ).animate().fadeIn(delay: 150.ms, duration: 500.ms),
+
+                const SizedBox(height: 28),
+
                 // ── Phone field ────────────────────────────────────────
-                _PhoneField(ctrl: ctrl, l: l)
+                Obx(
+                      () => ctrl.authMode.value == AuthMode.phone
+                          ? _PhoneField(ctrl: ctrl, l: l)
+                          : _EmailFields(ctrl: ctrl),
+                    )
                     .animate()
                     .fadeIn(delay: 200.ms, duration: 600.ms)
                     .slideX(begin: -0.1),
@@ -42,15 +54,41 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(height: 32),
 
                 // ── Send OTP Button ────────────────────────────────────
-                Obx(() => _SendButton(
-                      isLoading: ctrl.isLoading.value,
-                      label: l.sendOtp,
-                      onTap: ctrl.sendOtp,
-                    ))
-                    .animate()
-                    .fadeIn(delay: 350.ms, duration: 600.ms),
+                Obx(
+                  () => _SendButton(
+                    isLoading: ctrl.isLoading.value,
+                    label: ctrl.authMode.value == AuthMode.phone
+                        ? l.sendOtp
+                        : (ctrl.isRegistering.value
+                              ? 'Create account'
+                              : 'Sign in'),
+                    onTap: ctrl.authMode.value == AuthMode.phone
+                        ? ctrl.sendOtp
+                        : ctrl.signInWithEmailPassword,
+                  ),
+                ).animate().fadeIn(delay: 350.ms, duration: 600.ms),
 
-                const SizedBox(height: 36),
+                Obx(
+                  () => ctrl.authMode.value == AuthMode.email
+                      ? Center(
+                          child: TextButton(
+                            onPressed: ctrl.isLoading.value
+                                ? null
+                                : ctrl.toggleRegistering,
+                            child: Text(
+                              ctrl.isRegistering.value
+                                  ? 'Already have an account? Sign in'
+                                  : 'New here? Create an account',
+                              style: AppTextStyles.labelMedium.copyWith(
+                                color: AppColors.primaryLight,
+                              ),
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+
+                const SizedBox(height: 24),
 
                 // ── Terms ──────────────────────────────────────────────
                 Center(
@@ -103,13 +141,83 @@ class LoginScreen extends StatelessWidget {
               ),
             ],
           ),
-          child: const Center(child: Text('🌾', style: TextStyle(fontSize: 28))),
+          child: const Center(
+            child: Text('🌾', style: TextStyle(fontSize: 28)),
+          ),
         ),
         const SizedBox(height: 24),
         Text(l.welcomeBack, style: AppTextStyles.displayMedium),
         const SizedBox(height: 8),
         Text(l.enterPhone, style: AppTextStyles.bodyLarge),
       ],
+    );
+  }
+}
+
+class _AuthModeToggle extends StatelessWidget {
+  final AuthController ctrl;
+  final AuthMode selectedMode;
+  const _AuthModeToggle({required this.ctrl, required this.selectedMode});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.bgCard,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          _AuthModeButton(
+            label: 'Phone',
+            selected: selectedMode == AuthMode.phone,
+            onTap: () => ctrl.setAuthMode(AuthMode.phone),
+          ),
+          _AuthModeButton(
+            label: 'Email',
+            selected: selectedMode == AuthMode.email,
+            onTap: () => ctrl.setAuthMode(AuthMode.email),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuthModeButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _AuthModeButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            gradient: selected ? AppColors.primaryGradient : null,
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: AppTextStyles.labelMedium.copyWith(
+                color: selected ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -129,7 +237,9 @@ class _PhoneField extends StatelessWidget {
         IntlPhoneField(
           decoration: InputDecoration(
             hintText: '7XX XXX XXX',
-            hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textHint),
+            hintStyle: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textHint,
+            ),
             filled: true,
             fillColor: AppColors.bgCard,
             border: OutlineInputBorder(
@@ -142,14 +252,20 @@ class _PhoneField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: AppColors.borderFocus, width: 2),
+              borderSide: const BorderSide(
+                color: AppColors.borderFocus,
+                width: 2,
+              ),
             ),
             counterText: '',
           ),
           style: AppTextStyles.titleMedium,
           dropdownTextStyle: AppTextStyles.bodyMedium,
-          dropdownIcon: const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
-          initialCountryCode: 'KE',
+          dropdownIcon: const Icon(
+            Icons.arrow_drop_down,
+            color: AppColors.textSecondary,
+          ),
+          initialCountryCode: 'TZ',
           showCountryFlag: true,
           onChanged: (phone) {
             ctrl.setCountryCode(phone.countryCode);
@@ -165,11 +281,68 @@ class _PhoneField extends StatelessWidget {
   }
 }
 
+class _EmailFields extends StatelessWidget {
+  final AuthController ctrl;
+  const _EmailFields({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Email', style: AppTextStyles.labelLarge),
+        const SizedBox(height: 10),
+        TextField(
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          onChanged: ctrl.setEmail,
+          style: AppTextStyles.titleMedium,
+          decoration: _inputDecoration('farmer@example.com'),
+        ),
+        const SizedBox(height: 18),
+        Text('Password', style: AppTextStyles.labelLarge),
+        const SizedBox(height: 10),
+        TextField(
+          obscureText: true,
+          onChanged: ctrl.setPassword,
+          style: AppTextStyles.titleMedium,
+          decoration: _inputDecoration('Minimum 6 characters'),
+        ),
+      ],
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textHint),
+      filled: true,
+      fillColor: AppColors.bgCard,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.borderFocus, width: 2),
+      ),
+    );
+  }
+}
+
 class _SendButton extends StatelessWidget {
   final bool isLoading;
   final String label;
   final VoidCallback onTap;
-  const _SendButton({required this.isLoading, required this.label, required this.onTap});
+  const _SendButton({
+    required this.isLoading,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -200,7 +373,10 @@ class _SendButton extends StatelessWidget {
                     strokeWidth: 2.5,
                   ),
                 )
-              : Text(label, style: AppTextStyles.labelLarge.copyWith(fontSize: 17)),
+              : Text(
+                  label,
+                  style: AppTextStyles.labelLarge.copyWith(fontSize: 17),
+                ),
         ),
       ),
     );

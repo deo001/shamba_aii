@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shamba_ai/core/services/storage_service.dart';
@@ -11,6 +12,9 @@ import 'package:shamba_ai/routes/app_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase before any Firebase Auth or Firestore usage.
+  await Firebase.initializeApp();
 
   // Initialize Hive for offline storage
   await Hive.initFlutter();
@@ -41,10 +45,7 @@ class ShambaAIApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('sw'),
-      ],
+      supportedLocales: const [Locale('en'), Locale('sw')],
       locale: LocaleService.getSavedLocale(),
       localeResolutionCallback: (locale, supportedLocales) {
         for (final supported in supportedLocales) {
@@ -73,8 +74,5 @@ class ShambaAIApp extends StatelessWidget {
 /// GetX translations class (wraps ARB strings for GetX .tr support)
 class AppTranslations extends Translations {
   @override
-  Map<String, Map<String, String>> get keys => const {
-        'en_US': {},
-        'sw_TZ': {},
-      };
+  Map<String, Map<String, String>> get keys => const {'en_US': {}, 'sw_TZ': {}};
 }

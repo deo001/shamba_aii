@@ -11,6 +11,7 @@ import 'package:shamba_ai/features/crop_tracking/views/crop_tracking_screen.dart
 import 'package:shamba_ai/features/crop_tracking/views/crop_add_screen.dart';
 import 'package:shamba_ai/features/crop_tracking/views/crop_detail_screen.dart';
 import 'package:shamba_ai/features/notifications/views/notifications_screen.dart';
+import 'package:shamba_ai/features/profile/views/profile_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -81,6 +82,11 @@ class AppPages {
     GetPage(
       name: AppRoutes.notifications,
       page: () => const NotificationsScreen(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.settings,
+      page: () => const ProfileScreen(),
       transition: Transition.rightToLeft,
     ),
   ];

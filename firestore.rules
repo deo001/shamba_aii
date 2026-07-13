@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: Firebase Auth uid
+    // Fields:
+    //   - uid: string (required, immutable) - Firebase Auth uid.
+    //   - email: string|null (optional, max 254) - private email address.
+    //   - phoneNumber: string|null (optional, max 32) - private phone number.
+    //   - displayName: string|null (optional, max 80) - user's display name.
+    //   - photoUrl: string|null (optional, max 2048) - user's profile photo URL.
+    //   - languageCode: string|null (optional, enum: en/sw) - preferred UI language.
+    //   - createdAt: timestamp (required, immutable) - profile creation time.
+    //   - updatedAt: timestamp (required) - profile update time.
+    //   - lastLoginAt: timestamp (required) - latest login sync time.
+    //
+    // This document contains PII, so only the owner may read or write it.
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyUserFields(data) {
+      return data.keys().hasOnly([
+        'uid',
+        'email',
+        'phoneNumber',
+        'displayName',
+        'photoUrl',
+        'languageCode',
+        'createdAt',
+        'updatedAt',
+        'lastLoginAt'
+      ]);
+    }
+
+    function requiredUserFieldsPresent(data) {
+      return data.keys().hasAll([
+        'uid',
+        'createdAt',
+        'updatedAt',
+        'lastLoginAt'
+      ]);
+    }
+
+    function validOptionalString(data, field, maxLength) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is string && data[field].size() <= maxLength);
+    }
+
+    function isValidUserProfile(data, userId) {
+      return hasOnlyUserFields(data) &&
+        requiredUserFieldsPresent(data) &&
+        data.uid is string &&
+        data.uid == userId &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp &&
+        data.lastLoginAt is timestamp &&
+        validOptionalString(data, 'email', 254) &&
+        validOptionalString(data, 'phoneNumber', 32) &&
+        validOptionalString(data, 'displayName', 80) &&
+        validOptionalString(data, 'photoUrl', 2048) &&
+        (!(('languageCode') in data) ||
+          data.languageCode == null ||
+          data.languageCode in ['en', 'sw']);
+    }
+
+    function immutableUserFieldsUnchanged() {
+      return request.resource.data.uid == resource.data.uid &&
+        request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+        isValidUserProfile(request.resource.data, userId);
+      allow update: if isOwner(userId) &&
+        immutableUserFieldsUnchanged() &&
+        isValidUserProfile(request.resource.data, userId);
+      allow delete: if isOwner(userId);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
